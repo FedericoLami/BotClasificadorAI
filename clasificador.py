@@ -38,5 +38,4 @@ print(f"""categoria: {datos['categoria']}
           idioma: {datos['idioma']}
           sentimiento: {datos['sentimiento']}
           resumen: {datos['resumen']}""")
-
 guardarClasificacion(msj, datos["categoria"], datos["idioma"],datos["sentimiento"],datos["resumen"])
