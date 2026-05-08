@@ -1,5 +1,7 @@
 import anthropic
 import json
+from database import guardarClasificacion
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -30,6 +32,11 @@ formato_json = answer.content[0].text
 formato_json = formato_json.replace("```json", "")
 formato_json = formato_json.replace("```", "")
 
-print(formato_json)
-
 datos = json.loads(formato_json)
+
+print(f"""categoria: {datos['categoria']}
+          idioma: {datos['idioma']}
+          sentimiento: {datos['sentimiento']}
+          resumen: {datos['resumen']}""")
+
+guardarClasificacion(msj, datos["categoria"], datos["idioma"],datos["sentimiento"],datos["resumen"])
