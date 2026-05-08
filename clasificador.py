@@ -1,6 +1,5 @@
 import anthropic
 import json
-from database import guardarClasificacion
 
 from dotenv import load_dotenv
 
@@ -8,14 +7,10 @@ load_dotenv()
 
 client = anthropic.Anthropic()
 
-
-msj = input("Escribi tu problema: ")
-
-mensajes=[
-    {"role": "user", "content": msj}
-]
-
-answer = client.messages.create(
+def clasicadorMensaje(mensaje):
+    mensajes=[{"role": "user", "content": mensaje}]
+        
+    answer = client.messages.create(
     model = "claude-haiku-4-5",
     max_tokens = 1024,
     system = "Sos un clasificador de mensajes. " \
@@ -28,14 +23,11 @@ answer = client.messages.create(
     messages = mensajes
     )
 
-formato_json = answer.content[0].text
-formato_json = formato_json.replace("```json", "")
-formato_json = formato_json.replace("```", "")
+    formato_json = answer.content[0].text
+    formato_json = formato_json.replace("```json", "")
+    formato_json = formato_json.replace("```", "")
 
-datos = json.loads(formato_json)
+    datos = json.loads(formato_json)
+    
+    return datos
 
-print(f"""categoria: {datos['categoria']}
-          idioma: {datos['idioma']}
-          sentimiento: {datos['sentimiento']}
-          resumen: {datos['resumen']}""")
-guardarClasificacion(msj, datos["categoria"], datos["idioma"],datos["sentimiento"],datos["resumen"])
