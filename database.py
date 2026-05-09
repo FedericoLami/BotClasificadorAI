@@ -26,5 +26,13 @@ def guardarClasificacion(mensaje,categoria,idioma,sentimiento,resumen):
     conn.commit()
     conn.close()
 
+def retornarConsultas():
+    conn = sqlite3.connect("clasificaciones.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM consultasUsuario")
+    datos = cursor.fetchall()
+    conn.close()
+    return datos
+
 crearTabla()
     
