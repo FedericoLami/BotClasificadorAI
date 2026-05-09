@@ -27,7 +27,10 @@ def clasicadorMensaje(mensaje):
     formato_json = formato_json.replace("```json", "")
     formato_json = formato_json.replace("```", "")
 
-    datos = json.loads(formato_json)
-    
-    return datos
+    try:
+        datos = json.loads(formato_json)
+        return datos
+    except json.JSONDecodeError as e:
+        print("Error: Formato JSON invalido") 
+        raise ValueError("La respuesta de Claude no es JSON válido")
 
