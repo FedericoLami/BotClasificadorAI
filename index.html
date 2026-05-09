@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clasificador de Mensajes — AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f12;
+      --surface: #13161b;
+      --surface-2: #1a1e25;
+      --border: #252932;
+      --border-2: #2f3540;
+      --text: #e8eaf0;
+      --text-muted: #6b7280;
+      --text-dim: #3d4350;
+      --accent: #4f8ef7;
+      --accent-glow: rgba(79, 142, 247, 0.12);
+      --accent-2: #22d3a0;
+      --danger: #f87171;
+      --warning: #fbbf24;
+      --success: #22d3a0;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-size: 128px;
+      z-index: 0;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      background: rgba(13, 15, 18, 0.9);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .logo-text {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .logo-text span {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .status-pill {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--accent-2);
+      border: 1px solid rgba(34, 211, 160, 0.2);
+      padding: 0.2rem 0.7rem;
+      border-radius: 100px;
+      letter-spacing: 0.08em;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      margin-bottom: 3rem;
+    }
+
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      max-width: 440px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .card-header-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .card-title {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .card-body {
+      padding: 1.25rem;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      font-weight: 300;
+      line-height: 1.6;
+      padding: 0.85rem 1rem;
+      resize: none;
+      height: 120px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea::placeholder {
+      color: var(--text-dim);
+    }
+
+    .btn {
+      margin-top: 0.85rem;
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+    .result-area {
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .result-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 160px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      gap: 0.5rem;
+    }
+
+    .result-empty::before {
+      content: '—';
+      font-size: 1.5rem;
+      color: var(--border-2);
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.4rem;
+    }
+
+    .tag {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.65rem;
+      border-radius: 100px;
+      border: 1px solid;
+    }
+
+    .tag-queja   { color: #f87171; border-color: rgba(248,113,113,0.25); background: rgba(248,113,113,0.08); }
+    .tag-urgente { color: #fbbf24; border-color: rgba(251,191,36,0.25);  background: rgba(251,191,36,0.08); }
+    .tag-consulta{ color: #4f8ef7; border-color: rgba(79,142,247,0.25);  background: rgba(79,142,247,0.08); }
+    .tag-spam    { color: #6b7280; border-color: rgba(107,114,128,0.25); background: rgba(107,114,128,0.08); }
+    .tag-positivo{ color: #22d3a0; border-color: rgba(34,211,160,0.25);  background: rgba(34,211,160,0.08); }
+    .tag-neutral { color: #a3b0c0; border-color: rgba(163,176,192,0.25); background: rgba(163,176,192,0.08); }
+    .tag-negativo{ color: #f87171; border-color: rgba(248,113,113,0.25); background: rgba(248,113,113,0.08); }
+    .tag-default { color: #6b7280; border-color: rgba(107,114,128,0.25); background: rgba(107,114,128,0.08); }
+
+    .result-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+
+    .result-resumen {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0.8rem 0;
+    }
+
+    .error-msg {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--danger);
+      background: rgba(248,113,113,0.08);
+      border: 1px solid rgba(248,113,113,0.2);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+    }
+
+    .loading-bar {
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 0.85rem;
+    }
+
+    .loading-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    .loading-bar-fill.indeterminate {
+      width: 40%;
+      animation: slide 1.2s ease-in-out infinite;
+    }
+
+    @keyframes slide {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(350%); }
+    }
+
+    .history-section {
+      margin-top: 2.5rem;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .history-title {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .refresh-btn {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      background: none;
+      border: 1px solid rgba(79,142,247,0.25);
+      border-radius: 6px;
+      padding: 0.25rem 0.75rem;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: background 0.2s;
+    }
+
+    .refresh-btn:hover { background: var(--accent-glow); }
+
+    .history-table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    thead th {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-weight: 400;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+
+    tbody td {
+      padding: 0.75rem 1rem;
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+
+    tbody td:first-child { color: var(--text-dim); font-family: var(--mono); font-size: 0.7rem; }
+
+    .msg-cell {
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-history {
+      text-align: center;
+      padding: 2.5rem;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+
+  <header>
+    <div class="logo-dot"></div>
+    <div class="logo-text"><span>Clasificador</span> / AI</div>
+    <div class="status-pill">claude haiku · activo</div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Clasificación de mensajes<br>con <em>inteligencia artificial</em></h1>
+      <p>Ingresá un mensaje y el sistema lo analiza, categoriza y almacena automáticamente.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-dot"></div>
+          <span class="card-title">Nuevo mensaje</span>
+        </div>
+        <div class="card-body">
+          <textarea id="inputMsg" placeholder="Escribí el mensaje a clasificar..."></textarea>
+          <div class="loading-bar"><div class="loading-bar-fill" id="loadBar"></div></div>
+          <button class="btn" id="btnClasificar" onclick="clasificar()">Clasificar →</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-dot"></div>
+          <span class="card-title">Resultado</span>
+        </div>
+        <div class="card-body">
+          <div class="result-area" id="resultArea">
+            <div class="result-empty">esperando análisis</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="history-section">
+      <div class="history-header">
+        <span class="history-title">Historial de clasificaciones</span>
+        <button class="refresh-btn" onclick="cargarHistorial()">↻ actualizar</button>
+      </div>
+      <div class="history-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>mensaje</th>
+              <th>categoría</th>
+              <th>idioma</th>
+              <th>sentimiento</th>
+              <th>resumen</th>
+            </tr>
+          </thead>
+          <tbody id="historialBody">
+            <tr><td colspan="6" class="empty-history">cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API = 'http://127.0.0.1:8000'
+
+    function tagClass(val) {
+      const map = {
+        queja:'tag-queja', urgente:'tag-urgente', consulta:'tag-consulta', spam:'tag-spam',
+        positivo:'tag-positivo', neutral:'tag-neutral', negativo:'tag-negativo'
+      }
+      return map[val?.toLowerCase()] || 'tag-default'
+    }
+
+    async function clasificar() {
+      const msg = document.getElementById('inputMsg').value.trim()
+      if (!msg) return
+
+      const btn = document.getElementById('btnClasificar')
+      const bar = document.getElementById('loadBar')
+      btn.disabled = true
+      bar.className = 'loading-bar-fill indeterminate'
+
+      document.getElementById('resultArea').innerHTML = '<div class="result-empty">analizando...</div>'
+
+      try {
+        const res = await fetch(`${API}/clasificar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mensaje: msg })
+        })
+
+        if (!res.ok) throw new Error(`Error ${res.status}`)
+        const d = await res.json()
+
+        document.getElementById('resultArea').innerHTML = `
+          <div class="tag-row">
+            <span class="tag ${tagClass(d.categoria)}">${d.categoria}</span>
+            <span class="tag ${tagClass(d.sentimiento)}">${d.sentimiento}</span>
+            <span class="tag tag-default">${d.idioma}</span>
+          </div>
+          <hr class="divider">
+          <div class="result-label">resumen</div>
+          <div class="result-resumen">${d.resumen}</div>
+        `
+        cargarHistorial()
+      } catch (e) {
+        document.getElementById('resultArea').innerHTML =
+          `<div class="error-msg">error al conectar con la API — verificá que el servidor esté corriendo</div>`
+      } finally {
+        btn.disabled = false
+        bar.className = 'loading-bar-fill'
+      }
+    }
+
+    async function cargarHistorial() {
+      const tbody = document.getElementById('historialBody')
+      try {
+        const res = await fetch(`${API}/clasificaciones`)
+        const rows = await res.json()
+
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-history">sin registros aún</td></tr>'
+          return
+        }
+
+        tbody.innerHTML = rows.reverse().map(r => `
+          <tr>
+            <td>${r[0]}</td>
+            <td class="msg-cell" title="${r[1]}">${r[1]}</td>
+            <td><span class="tag ${tagClass(r[2])}">${r[2]}</span></td>
+            <td><span class="tag tag-default">${r[3]}</span></td>
+            <td><span class="tag ${tagClass(r[4])}">${r[4]}</span></td>
+            <td class="msg-cell" title="${r[5]}">${r[5]}</td>
+          </tr>
+        `).join('')
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-history">no se pudo conectar con la API</td></tr>'
+      }
+    }
+
+    document.getElementById('inputMsg').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) clasificar()
+    })
+
+    cargarHistorial()
+  </script>
+</body>
+</html>
