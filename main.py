@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 import clasificador
 from database import guardarClasificacion, retornarConsultas
@@ -8,6 +9,13 @@ class MensajeRequest (BaseModel):
     mensaje: str
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/clasificar")
 def clasificar_mensaje(request: MensajeRequest):
