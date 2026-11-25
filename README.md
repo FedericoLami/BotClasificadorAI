@@ -89,8 +89,8 @@ Devuelve todos los registros almacenados en la base de datos.
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/bot-clasificador.git
-cd bot-clasificador
+git clone https://github.com/FedericoLami/BotClasificadorAI.git
+cd BotClasificadorAI
 
 # 2. Crear y activar entorno virtual
 python -m venv venv
